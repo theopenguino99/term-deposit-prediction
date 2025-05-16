@@ -1,0 +1,42 @@
+# General pipeline configuration
+
+# Paths
+paths:
+  data_dir: "data/"
+  raw_data: "data/agri.db"
+  processed_data: "data/processed/"
+  features_data: "data/processed/features_data.csv"
+  models_dir: "models/"
+  results_dir: "results/"
+
+# Data processing settings
+data:
+  test_size: 0.2
+  validation_size: 0.25  # percentage of training data
+  random_state: 42
+  target_cat: 
+    'Plant Type-Stage'
+  target_num:
+    'Temperature Sensor (°C)'
+
+
+# Pipeline settings
+pipeline:
+  preprocessing_config: "config/preprocessing_config.yaml"
+  model_config: "config/model_config.yaml"
+  use_cross_validation: true
+  n_folds: 5
+  
+# Logging settings
+logging:
+  level: "INFO"
+  log_file: "pipeline.log"
+  console_output: true
+
+# Experiment tracking
+experiment:
+  track_metrics: true
+  save_models: true
+  save_feature_importance: true
+  save_predictions: true
+  save_visualizations: true

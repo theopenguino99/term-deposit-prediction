@@ -1,0 +1,115 @@
+# Model configuration
+
+# Common settings for all models
+common:
+  random_state: 42
+  n_jobs: -1  # Use all available cores
+
+# Models to train and their hyperparameters
+models:
+  linear_regression:
+    enabled: true
+    params: {}
+    hyperparameter_tuning:
+      enabled: false
+      
+  ridge_regression:
+    enabled: true
+    params:
+      alpha: 1.0
+    hyperparameter_tuning:
+      enabled: false
+      param_grid:
+        alpha: [0.001, 0.01, 0.1, 1.0, 10.0, 100.0]
+
+  random_forest:
+    enabled: true
+    params:
+      n_estimators: 100
+      max_depth: 10
+      min_samples_split: 2
+      min_samples_leaf: 1
+    hyperparameter_tuning:
+      enabled: false
+      param_grid:
+        n_estimators: [50, 100, 200]
+        max_depth: [5, 10, 15, 20, null]
+        min_samples_split: [2, 5, 10]
+        min_samples_leaf: [1, 2, 4]
+  
+  gradient_boosting:
+    enabled: true
+    params:
+      n_estimators: 100
+      learning_rate: 0.1
+      max_depth: 3
+    hyperparameter_tuning:
+      enabled: false
+      param_grid:
+        n_estimators: [50, 100, 200]
+        learning_rate: [0.01, 0.05, 0.1]
+        max_depth: [3, 5, 7]
+  
+  xgboost:
+    enabled: true
+    params:
+      n_estimators: 100
+      learning_rate: 0.1
+      max_depth: 5
+      subsample: 0.8
+      colsample_bytree: 0.8
+    hyperparameter_tuning:
+      enabled: false
+      param_grid:
+        n_estimators: [50, 100, 200]
+        learning_rate: [0.01, 0.05, 0.1]
+        max_depth: [3, 5, 7]
+        subsample: [0.7, 0.8, 0.9]
+        colsample_bytree: [0.7, 0.8, 0.9]
+
+advanced_models:
+  deep_temperature:
+    enabled: false
+    params:
+      hidden_layers: [100, 50]
+      activation: relu
+      solver: adam
+      learning_rate: adaptive
+      max_iter: 1000
+      alpha: 0.0001
+    hyperparameter_tuning:
+      enabled: false
+      param_grid:
+        hidden_layer_sizes: [[50], [100], [50, 50], [100, 50]]
+        activation: [relu, tanh]
+        alpha: [0.0001, 0.001, 0.01]
+        learning_rate: [constant, adaptive]
+        max_iter: [500, 1000, 2000]
+
+  ensemble_plant:
+    enabled: false
+    params:
+      voting: soft
+      weights: [1, 1, 1]  # Default weights for base models
+    hyperparameter_tuning:
+      enabled: false
+
+# Model evaluation metrics for regression problem
+evaluation_regression: # Used to evaluate models during model training phase
+  metrics:
+    - r2
+    - mae
+    - mse
+    - rmse
+  primary_metric: rmse  # Metric used for model selection
+  lower_is_better: true  # For primary metric
+
+# Model evaluation metrics for classification problem
+evaluation_classification:
+  metrics:
+    - accuracy
+    - precision
+    - recall
+    - f1
+  primary_metric: accuracy  # Metric used for model selection
+  lower_is_better: false  # For primary metric
