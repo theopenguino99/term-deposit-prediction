@@ -3,7 +3,7 @@
 # Paths
 paths:
   raw_data: "data/bmarket.db"
-  processed_data: "data/processed/"
+  processed_data: "data/"
   features_data: "data/processed/features_data.csv"
   models_dir: "models/"
   results_dir: "results/"

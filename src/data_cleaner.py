@@ -25,7 +25,13 @@ class DataCleaner:
         
     def clean_data(self, df):
         """
-        Clean and preprocess the data.
+        Clean the data in this order:
+        1a. Drop unnecessary columns
+        1b. Handle unknown values
+        2. Extract age from the 'Age' column
+        3. Impute missing values
+        4. Handle negative values in the 'Campaign Calls' column
+        5. Remove columns that are not defined in the config file
         
         Args:
             df (pandas.DataFrame): Input dataframe
@@ -37,11 +43,10 @@ class DataCleaner:
         # Create a copy to avoid modifying the original
         df_cleaned = df.copy()
         df_cleaned = self.drop_columns(df_cleaned)
-
         df_cleaned = self.handle_unknown_values(df_cleaned)
         df_cleaned = self.extract_age(df_cleaned)
         df_cleaned = self.impute(df_cleaned)
-        df_cleaned = self.handle_negative_Campaign_Calls(df_cleaned)
+        df_cleaned = self.handle_negative_values(df_cleaned)
         df_cleaned = self.remove_columns(df_cleaned)
         
         
@@ -57,7 +62,8 @@ class DataCleaner:
         Returns:
             pandas.DataFrame: Dataframe with dropped columns
         """
-        if self.preprocessing_config['cleaning']['drop_columns']['enabled']:
+        if (self.preprocessing_config['cleaning']['drop_columns']['enabled'] and 
+            self.preprocessing_config['cleaning']['drop_columns']['columns'] != None):
             columns_to_drop = self.preprocessing_config['cleaning']['drop_columns']['columns']
         
             # Drop specified columns
@@ -162,9 +168,9 @@ class DataCleaner:
 
         return df
     
-    def handle_negative_Campaign_Calls(self, df):
+    def handle_negative_values(self, df):
         """
-        Handle negative values in the 'Campaign_Calls' column.
+        Handle negative values in the 'Campaign Calls' column.
         
         Args:
             df (pandas.DataFrame): Input dataframe
@@ -172,16 +178,16 @@ class DataCleaner:
         Returns:
             pandas.DataFrame: Dataframe with removed or absolute of negative values
         """
-        if self.preprocessing_config['cleaning']['handle_negative_Campaign_Calls']['enabled']:
-            if 'Campaign_Calls' in df.columns:
+        if self.preprocessing_config['cleaning']['handle_negative_values']['enabled']:
+            if 'Campaign Calls' in df.columns:
                 strategy = self.preprocessing_config['cleaning']['handle_negative_values']['strategy']
                 if strategy == 'remove':
-                    df = df[df['Campaign_Calls'] >= 0]
+                    df = df[df['Campaign Calls'] >= 0]
                 elif strategy == 'absolute':
-                    df['Campaign_Calls'] = df['Campaign_Calls'].abs()
+                    df['Campaign Calls'] = df['Campaign Calls'].abs()
             else:
-                logger.error("Column 'Campaign_Calls' not found in DataFrame")
-                raise ValueError("Column 'Campaign_Calls' not found in DataFrame")
+                logger.error("Column 'Campaign Calls' not found in DataFrame")
+                raise ValueError("Column 'Campaign Calls' not found in DataFrame")
         
         return df
     
@@ -195,9 +201,6 @@ class DataCleaner:
         Returns:
             pandas.DataFrame: Dataframe with removed columns
         """
-        if not self.preprocessing_config['cleaning']['remove_columns']['enabled']:
-            return df
-        # Get the columns defined in the config
         columns_to_keep = (
             self.preprocessing_config['columns']['categorical']['Ordinal'] +
             self.preprocessing_config['columns']['categorical']['One-hot'] +
@@ -210,6 +213,6 @@ class DataCleaner:
             logger.info(f"Removing columns not defined in config: {columns_to_remove}")
             df.drop(columns=columns_to_remove, inplace=True)
         else:
-            logger.info("No columns to remove, all columns are defined in the config.")
+            logger.info("No columns to remove, all columns are defined in the config!")
             
         return df

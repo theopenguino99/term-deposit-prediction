@@ -6,16 +6,15 @@ columns: # Columns not defined these lists will be removed
     Ordinal:
       - Education Level  # Has natural order from illiterate to university degree
       - Marital Status  # Can be ordered by relationship progression
+      - Subscription Status  # Binary
     One-hot:
       - Occupation      # No inherent order
       - Credit Default  # Binary + unknown
       - Housing Loan    # Binary + unknown
       - Personal Loan   # Binary + unknown
       - Contact Method  # Distinct categories
-      - Subscription Status  # Binary
-  
   numerical:
-    - Client ID
+    # - Client ID # Unique identifier, not useful for modeling
     - Age
     - Campaign Calls
     - Previous Contact Days
@@ -40,9 +39,10 @@ cleaning:
       - Personal Loan
     
   impute:
+    enabled: true
     columns:
       - Housing Loan
-      - Personal Location
+      - Personal Loan
     strategy: mode  # Options: mode, constant, knn, random
     neighbors: 5  # Only used if strategy is knn
   
@@ -54,26 +54,27 @@ cleaning:
 
 #-------------------------------------------------------------------#
 
-# Feature preprocessing
+# Feature preprocessing settings
 preprocessing:
   handle_outliers:
       enabled: false 
-      method: iqr  # Options: iqr, zscore, none
+      method: iqr  # Options: iqr, zscore
       iqr_multiplier: 1.5
       zscore_threshold: 3.0
       columns:
         - Campaign Calls
         - Age
         # - Previous Contact Days #Do not include as data is bimodal
-  # categorical_encoding:
-  #   method: one-hot  # Options: one-hot, label, target, frequency
-  #   handle_unknown: ignore
     
   numerical_scaling:
     method: standard  # Options: standard, minmax, robust, none
+    columns:
+      - Campaign Calls
+      - Age
+      # - Previous Contact Days #Do not include as data is bimodal
 
-# Feature selection
-feature_selection:
-  method: none  # Options: variance, correlation, importance, none
-  variance_threshold: 0.01  # Only used if method is variance
-  correlation_threshold: 0.8  # Only used if method is correlation
+  # Feature selection
+  feature_selection:
+    method: none  # Options: variance, correlation, importance, none
+    variance_threshold: 0.01  # Only used if method is variance
+    correlation_threshold: 0.8  # Only used if method is correlation
