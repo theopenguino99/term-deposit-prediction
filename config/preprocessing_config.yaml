@@ -2,17 +2,19 @@
 
 # Columns information
 columns: # Columns not defined these lists will be removed
+  others:
+    - Subscription Status  # Target variable
+    # - Client ID  # Unique identifier, not useful for modeling
   categorical:
     Ordinal:
       - Education Level  # Has natural order from illiterate to university degree
-      - Marital Status  # Can be ordered by relationship progression
-      - Subscription Status  # Binary
     One-hot:
       - Occupation      # No inherent order
       - Credit Default  # Binary + unknown
       - Housing Loan    # Binary + unknown
       - Personal Loan   # Binary + unknown
       - Contact Method  # Distinct categories
+      - Marital Status # Distinct categories
   numerical:
     # - Client ID # Unique identifier, not useful for modeling
     - Age
@@ -31,9 +33,9 @@ cleaning:
   handle_unknown_values:
     enabled: true
     columns: # List columns that have 'unknown' values
-      # - Occupation
+      - Occupation
       # - Marital Status
-      # - Education Level
+      - Education Level
       # - Credit Default
       - Housing Loan # Both Housing Loan and Personal Loan have existing NaN values
       - Personal Loan

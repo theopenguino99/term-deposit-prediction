@@ -204,7 +204,8 @@ class DataCleaner:
         columns_to_keep = (
             self.preprocessing_config['columns']['categorical']['Ordinal'] +
             self.preprocessing_config['columns']['categorical']['One-hot'] +
-            self.preprocessing_config['columns']['numerical']
+            self.preprocessing_config['columns']['numerical'] +
+            self.preprocessing_config['columns']['others']
         )
         # Keep only columns defined in the config file
         columns_to_remove = [col for col in df.columns if col not in columns_to_keep]

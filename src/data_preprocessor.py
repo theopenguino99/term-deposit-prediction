@@ -8,6 +8,7 @@ from sklearn.preprocessing import StandardScaler, MinMaxScaler, RobustScaler, La
 from category_encoders import OneHotEncoder
 from config_loader import load_config, load_preprocessing_config
 from scipy.stats import zscore
+import pandas as pd
 
 class DataPreprocessor:
     """Class to preprocess data for model training."""
@@ -71,14 +72,22 @@ class DataPreprocessor:
         # Handle ordinal columns with label encoding
         if ordinal_cols:
             for col in ordinal_cols:
-                le = LabelEncoder()
-                df[col] = le.fit_transform(df[col].astype(str))
-                self.encoders[col] = le
-                logger.info(f"Label encoded ordinal column: {col}")
+                if col == 'Education Level':
+                    education_order = ['illiterate', 'basic.4y', 'basic.6y', 'basic.9y', 
+                                    'high.school', 'professional.course', 'university.degree']
+                    mapping = {level: idx for idx, level in enumerate(education_order)}
+                    df[col] = df[col].map(mapping)
+                    self.encoders[col] = mapping
+                    logger.info(f"Custom ordinal encoding for Education Level")
+                else:
+                    le = LabelEncoder()
+                    df[col] = le.fit_transform(df[col].astype(str))
+                    self.encoders[col] = le
+                    logger.info(f"Label encoded ordinal column: {col}")
 
         # Handle nominal columns with one-hot encoding
         if onehot_cols:
-            encoder = OneHotEncoder(cols=onehot_cols)
+            encoder = OneHotEncoder(cols=onehot_cols, return_df=True, use_cat_names=True)
             df = encoder.fit_transform(df)
             self.encoders['onehot'] = encoder
             logger.info(f"One-hot encoded columns: {onehot_cols}")
