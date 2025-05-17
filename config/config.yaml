@@ -2,8 +2,7 @@
 
 # Paths
 paths:
-  data_dir: "data/"
-  raw_data: "data/agri.db"
+  raw_data: "data/bmarket.db"
   processed_data: "data/processed/"
   features_data: "data/processed/features_data.csv"
   models_dir: "models/"
@@ -22,8 +21,6 @@ data:
 
 # Pipeline settings
 pipeline:
-  preprocessing_config: "config/preprocessing_config.yaml"
-  model_config: "config/model_config.yaml"
   use_cross_validation: true
   n_folds: 5
   

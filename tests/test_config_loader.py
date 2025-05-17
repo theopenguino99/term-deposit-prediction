@@ -8,7 +8,7 @@ def test_load_config():
     """Ensure config.yaml loads correctly as a dictionary."""
     config = load_config()
     assert isinstance(config, dict)
-    assert "pipeline" in config  # Adjust based on your config structure
+    assert "pipeline" in config  
 
 def test_load_preprocessing_config():
     """Ensure preprocessing config loads correctly."""

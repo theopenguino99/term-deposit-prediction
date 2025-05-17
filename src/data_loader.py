@@ -22,11 +22,11 @@ class DataLoader:
         """
         self.config = load_config()
         self.preprocessing_config = load_preprocessing_config()
-        self.raw_data_path = load_raw_data()
+        self.raw_data_path = self.config['paths']['raw_data']
         
     def load_data(self):
         """
-        Load the data from the specified source.
+        Load the data from the specified source (only .db files supported).
         
         Returns:
             pandas.DataFrame: Loaded data
@@ -37,24 +37,15 @@ class DataLoader:
         
         # Determine file type and load accordingly
         file_extension = Path(self.raw_data_path).suffix.lower()
-        
-        if file_extension == '.csv':
-            df = pd.read_csv(self.raw_data_path)
-        elif file_extension in ['.xls', '.xlsx']:
-            df = pd.read_excel(self.raw_data_path)
-        elif file_extension == '.json':
-            df = pd.read_json(self.raw_data_path)
-        elif file_extension == '.parquet':
-            df = pd.read_parquet(self.raw_data_path)
-        elif file_extension == '.db':
-            df = self._load_from_sqlite(self.raw_data_path)
+        if file_extension == '.db':
+            df = self.load_from_sqlite(self.raw_data_path)
         else:
             logger.error(f"Unsupported file format: {file_extension}")
             raise ValueError(f"Unsupported file format: {file_extension}")
         
         return df
     
-    def _load_from_sqlite(self, db_path):
+    def load_from_sqlite(self, db_path):
         """
         Load data from an SQLite database.
         
@@ -64,7 +55,6 @@ class DataLoader:
         Returns:
             pandas.DataFrame: Loaded data
         """
-        print(db_path)
         conn = sqlite3.connect(db_path)
         # Get the first table name from the SQLite database
         cursor = conn.cursor()
@@ -75,31 +65,3 @@ class DataLoader:
         df = pd.read_sql_query(query, conn)
         conn.close()
         return df
-    
-    def save_data(self, df, filepath):
-        """
-        Save data to the specified path.
-        
-        Args:
-            df (pandas.DataFrame): DataFrame to save
-            filepath (str): Path to save the data
-        """
-        directory = os.path.dirname(filepath)
-        if not os.path.exists(directory):
-            os.makedirs(directory)
-            
-        file_extension = Path(filepath).suffix.lower()
-        
-        if file_extension == '.csv':
-            df.to_csv(filepath, index=False)
-        elif file_extension in ['.xls', '.xlsx']:
-            df.to_excel(filepath, index=False)
-        elif file_extension == '.json':
-            df.to_json(filepath, orient='records')
-        elif file_extension == '.parquet':
-            df.to_parquet(filepath, index=False)
-        else:
-            logger.error(f"Unsupported file format for saving: {file_extension}")
-            raise ValueError(f"Unsupported file format for saving: {file_extension}")
-        
-        logger.info(f"Data saved successfully to {filepath}")

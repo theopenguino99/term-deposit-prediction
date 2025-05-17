@@ -1,7 +1,11 @@
 """
 Module for cleaning and preprocessing data.
 """
-from config_loader import load_config, load_preprocessing_config
+from config_loader import *
+import pandas as pd
+import numpy as np
+from loguru import logger
+from sklearn.impute import KNNImputer
 
 
 class DataCleaner:
@@ -16,6 +20,8 @@ class DataCleaner:
         """
         self.config = load_config()
         self.preprocessing_config = load_preprocessing_config()
+        self.raw_data_path = self.config['paths']['raw_data']
+
         
     def clean_data(self, df):
         """
@@ -30,169 +36,180 @@ class DataCleaner:
         
         # Create a copy to avoid modifying the original
         df_cleaned = df.copy()
-        
-        # Apply each cleaning step
-        df_cleaned = self.clean_nutrient_sensors(df_cleaned)
-        df_cleaned = self._map_labels_to_lowercase(df_cleaned)
-        df_cleaned = self._handle_negative_values(df_cleaned)
-        df_cleaned = self._handle_duplicates(df_cleaned)
-        df_cleaned = self._handle_missing_values(df_cleaned)
-        df_cleaned = self._handle_outliers(df_cleaned)
+        df_cleaned = self.drop_columns(df_cleaned)
+
+        df_cleaned = self.handle_unknown_values(df_cleaned)
+        df_cleaned = self.extract_age(df_cleaned)
+        df_cleaned = self.impute(df_cleaned)
+        df_cleaned = self.handle_negative_Campaign_Calls(df_cleaned)
+        df_cleaned = self.remove_columns(df_cleaned)
         
         
         return df_cleaned
-
-    def clean_nutrient_sensors(self, df):
+    
+    def drop_columns(self, df):
         """
-        Clean and extract numerical values from nutrient sensor columns.
+        Drop specified columns from the dataframe.
         
         Args:
             df (pandas.DataFrame): Input dataframe
             
         Returns:
-            pandas.DataFrame: Dataframe with cleaned nutrient sensor columns
+            pandas.DataFrame: Dataframe with dropped columns
         """
-        if not self.preprocessing_config['cleaning']['clean_Nutrient_Sensor']['enabled']:
-            return df
+        if self.preprocessing_config['cleaning']['drop_columns']['enabled']:
+            columns_to_drop = self.preprocessing_config['cleaning']['drop_columns']['columns']
         
-        
-        nutrient_columns = self.preprocessing_config['cleaning']['clean_Nutrient_Sensor']['columns']
-        
-        for col in nutrient_columns:
-            if col in df.columns:
-                df[col] = df[col].str.extract('(\d+)', expand=False).astype(float)
-        
-        return df
-        
-    def _map_labels_to_lowercase(self, df):
-        """Map capitalized labels in specified columns to lowercase."""
-        if not self.preprocessing_config['cleaning']['map_labels_to_lowercase']['enabled']:
-            return df
-        
-        
-        columns_to_map = self.preprocessing_config['cleaning']['map_labels_to_lowercase']['columns']
-        
-        for col in columns_to_map:
-            if col in df.columns:
-                df[col] = df[col].str.lower()
-        
-        return df
-    
-    def _handle_negative_values(self, df):
-        """Handle negative values in specified columns."""
-        if not self.preprocessing_config['cleaning']['handle_negative_values']['enabled']:
-            return df
-        
-        
-        columns_to_handle = self.preprocessing_config['cleaning']['handle_negative_values']['columns']
-        strategy = self.preprocessing_config['cleaning']['handle_negative_values']['strategy']
-        
-        for col in columns_to_handle:
-            if col in df.columns:
-                negative_count = (df[col] < 0).sum()
-                if negative_count > 0:
-                    if strategy == 'remove':
-                        df = df[df[col] >= 0]
-                    elif strategy == 'absolute':
-                        df[col] = df[col].abs()
-        
-        return df
-    
-    def _handle_duplicates(self, df):
-        """Handle duplicate rows in the dataframe."""
-        if not self.preprocessing_config['cleaning']['handle_duplicates']['enabled']:
-            return df
-        
-        
-        # Identify columns to ignore when detecting duplicates
-        ignore_cols = self.preprocessing_config['cleaning']['handle_duplicates']['ignore_columns']
-        cols_to_check = [col for col in df.columns if col not in ignore_cols]
-        
-        # Count duplicates
-        n_duplicates = df.duplicated(subset=cols_to_check).sum()
-        
-        if n_duplicates > 0:
-            # Keep only the first occurrence of duplicates
-            keep_option = self.preprocessing_config['cleaning']['handle_duplicates']['keep']
-            df = df.drop_duplicates(subset=cols_to_check, keep=keep_option)
-        
-        return df
-    
-    def _handle_missing_values(self, df):
-        """Handle missing values in the dataframe."""
-        if not self.preprocessing_config['cleaning']['handle_missing_values']['enabled']:
-            return df
-        
-        
-        # Get missing value configurations
-        num_strategy = self.preprocessing_config['cleaning']['handle_missing_values']['numerical']['strategy']
-        cat_strategy = self.preprocessing_config['cleaning']['handle_missing_values']['categorical']['strategy']
-        
-        # Get column lists
-        num_cols = self.preprocessing_config['columns']['numerical']
-        cat_cols = self.preprocessing_config['columns']['categorical']
-        dt_cols = self.preprocessing_config['columns']['datetime']
-        
-        # Report missing values
-        missing_info = df.isnull().sum()
-        
-        # Handle missing numerical values
-        for col in num_cols:
-            if col in df.columns and df[col].isnull().sum() > 0:
-                if num_strategy == 'mean':
-                    df[col] = df[col].fillna(df[col].mean())
-                elif num_strategy == 'median':
-                    df[col] = df[col].fillna(df[col].median())
-                elif num_strategy == 'mode':
-                    df[col] = df[col].fillna(df[col].mode()[0])
-                elif num_strategy == 'constant':
-                    const_val = self.preprocessing_config['cleaning']['handle_missing_values']['numerical']['constant_value']
-                    df[col] = df[col].fillna(const_val)
-        
-        # Handle missing categorical values
-        for col in cat_cols:
-            if col in df.columns and df[col].isnull().sum() > 0:
-                if cat_strategy == 'mode':
-                    df[col] = df[col].fillna(df[col].mode()[0])
-                elif cat_strategy == 'constant':
-                    const_val = self.preprocessing_config['cleaning']['handle_missing_values']['categorical']['constant_value']
-                    df[col] = df[col].fillna(const_val)
-        
-        # Report missing values after imputation
-        missing_info_after = df.isnull().sum()
-        
-        return df
-    
-    
-    def _handle_outliers(self, df):
-        """Handle outliers in numerical features based on the specified strategy."""
-        if not self.preprocessing_config['cleaning']['handle_outliers']['enabled']:
-            return df
-        
-        
-        if self.preprocessing_config['cleaning']['handle_outliers']==None:
-            return df
-        
-        method = self.preprocessing_config['cleaning']['handle_outliers']['method']
-        iqr_multiplier = self.preprocessing_config['cleaning']['handle_outliers'].get('iqr_multiplier', 1.5)
-        zscore_threshold = self.preprocessing_config['cleaning']['handle_outliers'].get('zscore_threshold', 3.0)
-        outlier_columns = self.preprocessing_config['cleaning']['handle_outliers'].get('columns', [])
-        
-        for col in outlier_columns:
-            if col in df.columns:
-                if method == 'zscore':
-                    from scipy.stats import zscore
-                    z_scores = zscore(df[col].dropna())
-                    outliers = abs(z_scores) > zscore_threshold
-                    df.loc[outliers, col] = df[col].median()
+            # Drop specified columns
+            for col in columns_to_drop:
+                if col in df.columns:
+                    df.drop(columns=col, inplace=True)
+                else:
+                    logger.error(f"Column '{col}' specified in config file not found in DataFrame")
+                    raise ValueError(f"Column '{col}' specified in config file not found in DataFrame")
                 
-                elif method == 'iqr':
-                    Q1 = df[col].quantile(0.25)
-                    Q3 = df[col].quantile(0.75)
-                    IQR = Q3 - Q1
-                    lower_bound = Q1 - iqr_multiplier * IQR
-                    upper_bound = Q3 + iqr_multiplier * IQR
-                    outliers = (df[col] < lower_bound) | (df[col] > upper_bound)
-                    df.loc[outliers, col] = df[col].median()
+        return df
+    
+    def handle_unknown_values(self, df):
+        """
+        Handle unknown values in the dataframe.
         
+        Args:
+            df (pandas.DataFrame): Input dataframe
+            
+        Returns:
+            pandas.DataFrame: Dataframe with handled unknown values
+        """
+        if not self.preprocessing_config['cleaning']['handle_unknown_values']['enabled']:
+            return df
+        
+        columns_to_handle = self.preprocessing_config['cleaning']['handle_unknown_values']['columns']
+        
+        # Replace 'unknown' with NaN
+        for col in columns_to_handle:
+            if col not in df.columns:
+                logger.error(f"Column '{col}' specified in config file not found in DataFrame")
+                raise ValueError(f"Column '{col}' specified in config file not found in DataFrame")
+            else:
+                df[col] = df[col].replace('unknown', np.nan)
+        return df
+    
+    def extract_age(self, df):
+        """
+        Extract age from the 'Age' column.
+        
+        Args:
+            df (pandas.DataFrame): Input dataframe
+            
+        Returns:
+            pandas.DataFrame: Dataframe with extracted age
+        """
+        if 'Age' in df.columns:
+            df['Age'] = df['Age'].str.replace('years', '').str.strip()
+            df['Age'] = pd.to_numeric(df['Age'])
+        
+        return df
+    
+
+    def impute(self, df):
+        """
+        Impute missing values in the dataframe based on column type (we only have NaN values in the categorical data to impute).
+        
+        Args:
+            df (pandas.DataFrame): Input dataframe
+            
+        Returns:
+            pandas.DataFrame: Dataframe with imputed values
+        """
+        if not self.preprocessing_config['cleaning']['impute']['enabled']:
+            return df
+
+        # Get columns to impute and validate against handle_unknown_values columns
+        columns_to_impute = self.preprocessing_config['cleaning']['impute']['columns']
+        handle_unknown_cols = self.preprocessing_config['cleaning']['handle_unknown_values']['columns']
+        
+        if not set(columns_to_impute).issubset(set(handle_unknown_cols)):
+            error_msg = "Columns to impute must be a subset of handle_unknown_values columns in config"
+            logger.error(error_msg)
+            raise ValueError(error_msg)
+
+        # Get imputation configurations
+        cat_strategy = self.preprocessing_config['cleaning']['impute']['strategy']
+        
+        # Get column types
+        cols = self.preprocessing_config['columns']
+
+        # Only impute columns that actually have NaN values
+        columns_with_nan = df.columns[df.isna().any()].tolist()
+        columns_to_process = list(set(columns_to_impute) & set(columns_with_nan))
+
+        # Impute categorical columns
+        for col in set(columns_to_process) & set(cols):
+            if cat_strategy == 'mode':
+                df[col] = df[col].fillna(df[col].mode()[0])
+            elif cat_strategy == 'constant':
+                const_val = self.preprocessing_config['cleaning']['handle_missing_values']['categorical']['constant_value']
+                df[col] = df[col].fillna(const_val)
+            elif cat_strategy == 'knn':
+                # KNN imputation
+                neighbors = self.preprocessing_config['cleaning']['impute']['neighbors']
+                imputer = KNNImputer(n_neighbors=neighbors)
+                df[col] = imputer.fit_transform(df[[col]])
+            elif cat_strategy == 'random':
+                # Random value imputation from column values
+                random_value = df[col].dropna().sample(n=1).iloc[0]
+                df[col] = df[col].fillna(random_value)
+
+        return df
+    
+    def handle_negative_Campaign_Calls(self, df):
+        """
+        Handle negative values in the 'Campaign_Calls' column.
+        
+        Args:
+            df (pandas.DataFrame): Input dataframe
+            
+        Returns:
+            pandas.DataFrame: Dataframe with removed or absolute of negative values
+        """
+        if self.preprocessing_config['cleaning']['handle_negative_Campaign_Calls']['enabled']:
+            if 'Campaign_Calls' in df.columns:
+                strategy = self.preprocessing_config['cleaning']['handle_negative_values']['strategy']
+                if strategy == 'remove':
+                    df = df[df['Campaign_Calls'] >= 0]
+                elif strategy == 'absolute':
+                    df['Campaign_Calls'] = df['Campaign_Calls'].abs()
+            else:
+                logger.error("Column 'Campaign_Calls' not found in DataFrame")
+                raise ValueError("Column 'Campaign_Calls' not found in DataFrame")
+        
+        return df
+    
+    def remove_columns(self, df):
+        """
+        Remove specified columns from the dataframe according to columns that are not defined in the config file.
+        
+        Args:
+            df (pandas.DataFrame): Input dataframe
+            
+        Returns:
+            pandas.DataFrame: Dataframe with removed columns
+        """
+        if not self.preprocessing_config['cleaning']['remove_columns']['enabled']:
+            return df
+        # Get the columns defined in the config
+        columns_to_keep = (
+            self.preprocessing_config['columns']['categorical']['Ordinal'] +
+            self.preprocessing_config['columns']['categorical']['One-hot'] +
+            self.preprocessing_config['columns']['numerical']
+        )
+        # Keep only columns defined in the config file
+        columns_to_remove = [col for col in df.columns if col not in columns_to_keep]
+        
+        if columns_to_remove:
+            logger.info(f"Removing columns not defined in config: {columns_to_remove}")
+            df.drop(columns=columns_to_remove, inplace=True)
+        else:
+            logger.info("No columns to remove, all columns are defined in the config.")
+            
         return df

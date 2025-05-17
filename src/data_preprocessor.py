@@ -56,16 +56,6 @@ class DataPreprocessor:
 
         
         return df_processed
-    
-    def _drop_columns(self, df):
-        """Drop unnecessary columns."""
-        drop_columns = self.preprocessing_config['columns']['drop_columns']
-        if drop_columns:
-            # Only drop columns that exist in the dataframe
-            columns_to_drop = [col for col in drop_columns if col in df.columns]
-            if columns_to_drop:
-                df = df.drop(columns=columns_to_drop)
-        return df
 
     
     def _encode_categorical_columns(self, df):
@@ -139,3 +129,37 @@ class DataPreprocessor:
         self.scalers['numerical'] = scaler
         
         return df_scaled
+    
+    def _handle_outliers(self, df):
+        """Handle outliers in numerical features based on the specified strategy."""
+        if not self.preprocessing_config['cleaning']['handle_outliers']['enabled']:
+            return df
+        
+        
+        if self.preprocessing_config['cleaning']['handle_outliers']==None:
+            return df
+        
+        method = self.preprocessing_config['cleaning']['handle_outliers']['method']
+        iqr_multiplier = self.preprocessing_config['cleaning']['handle_outliers'].get('iqr_multiplier', 1.5)
+        zscore_threshold = self.preprocessing_config['cleaning']['handle_outliers'].get('zscore_threshold', 3.0)
+        outlier_columns = self.preprocessing_config['cleaning']['handle_outliers'].get('columns', [])
+        
+        for col in outlier_columns:
+            if col in df.columns:
+                if method == 'zscore':
+                    from scipy.stats import zscore
+
+                    z_scores = zscore(df[col].dropna())
+                    outliers = abs(z_scores) > zscore_threshold
+                    df.loc[outliers, col] = df[col].median()
+                
+                elif method == 'iqr':
+                    Q1 = df[col].quantile(0.25)
+                    Q3 = df[col].quantile(0.75)
+                    IQR = Q3 - Q1
+                    lower_bound = Q1 - iqr_multiplier * IQR
+                    upper_bound = Q3 + iqr_multiplier * IQR
+                    outliers = (df[col] < lower_bound) | (df[col] > upper_bound)
+                    df.loc[outliers, col] = df[col].median()
+        
+        return df

@@ -1,130 +1,76 @@
-# Data preprocessing configuration
+# Data CLEANING and PREPROCESSING configuration
 
 # Columns information
-columns: 
-  categorical: # Columns to encode
-    - System Location Code
-    - Previous Cycle Plant Type
-    - Plant Type
-    - Plant Stage
-    - Plant Type-Stage
+columns: # Columns not defined these lists will be removed
+  categorical:
+    Ordinal:
+      - Education Level  # Has natural order from illiterate to university degree
+      - Marital Status  # Can be ordered by relationship progression
+    One-hot:
+      - Occupation      # No inherent order
+      - Credit Default  # Binary + unknown
+      - Housing Loan    # Binary + unknown
+      - Personal Loan   # Binary + unknown
+      - Contact Method  # Distinct categories
+      - Subscription Status  # Binary
   
   numerical:
-    - Temperature Sensor (°C)
-    - Humidity Sensor (%)
-    - Light Intensity Sensor (lux)
-    - CO2 Sensor (ppm)
-    - EC Sensor (dS/m)
-    - O2 Sensor (ppm)
-    - Nutrient N Sensor (ppm) # clean_Nutrient_Sensor has to be enabled
-    - Nutrient P Sensor (ppm) # clean_Nutrient_Sensor has to be enabled
-    - Nutrient K Sensor (ppm) # clean_Nutrient_Sensor has to be enabled
-    - pH Sensor
-    - Water Level Sensor (mm)
-  
-  datetime:
-    - sleep_time
-    - wake_time
-  
-  drop_columns: # Columns to drop from the dataset manually e.g. none
-    - System Location Code
+    - Client ID
+    - Age
+    - Campaign Calls
+    - Previous Contact Days
  
+#-------------------------------------------------------------------#
 
 # Data cleaning settings
-cleaning:
-  clean_Nutrient_Sensor:
+cleaning: 
+  drop_columns: # Columns to drop from the dataset manually e.g. none
     enabled: true
     columns:
-      - Nutrient N Sensor (ppm)
-      - Nutrient P Sensor (ppm)
-      - Nutrient K Sensor (ppm)
-      
+      # - Housing Loan # Contains the most number of NaN values
+
+  handle_unknown_values:
+    enabled: true
+    columns: # List columns that have 'unknown' values
+      # - Occupation
+      # - Marital Status
+      # - Education Level
+      # - Credit Default
+      - Housing Loan # Both Housing Loan and Personal Loan have existing NaN values
+      - Personal Loan
+    
+  impute:
+    columns:
+      - Housing Loan
+      - Personal Location
+    strategy: mode  # Options: mode, constant, knn, random
+    neighbors: 5  # Only used if strategy is knn
+  
   handle_negative_values:
     enabled: true
     columns:
-      - Temperature Sensor (°C)
-      - Light Intensity Sensor (lux)
+      - Campaign Calls
     strategy: absolute  # Options: remove, absolute
-  
-  map_labels_to_lowercase:
-    enabled: true
-    columns:
-      - Plant Type 
-      - Plant Stage
-  
-  handle_duplicates:
-    enabled: true
-    ignore_columns:
-      none
-    keep: first
-  
-  handle_missing_values:
-    enabled: true
-    numerical:
-      strategy: median  # Options: mean, median, mode, constant
-      constant_value: 0  # Only used if strategy is constant
-    
-    categorical:
-      strategy: mode  # Options: mode, constant
-      constant_value: "unknown"  # Only used if strategy is constant
-  
-  handle_outliers:
-    enabled: false 
-    method: iqr  # Options: iqr, zscore, none
-    iqr_multiplier: 1.5
-    zscore_threshold: 3.0
-    columns:
-      - age
-      - hours_per_week
-      - attendance_rate
-      - Temperature Sensor (°C)
-      - Humidity Sensor (%)
-      - Light Intensity Sensor (lux)
-      - CO2 Sensor (ppm)
-      - EC Sensor (dS/m)
-      - O2 Sensor (ppm)
-      - Nutrient N Sensor (ppm)
-      - Nutrient P Sensor (ppm)
-      - Nutrient K Sensor (ppm)
-      - pH Sensor
-      - Water Level Sensor (mm)
+
+#-------------------------------------------------------------------#
 
 # Feature preprocessing
 preprocessing:
-  categorical_encoding:
-    method: one-hot  # Options: one-hot, label, target, frequency
-    handle_unknown: ignore
+  handle_outliers:
+      enabled: false 
+      method: iqr  # Options: iqr, zscore, none
+      iqr_multiplier: 1.5
+      zscore_threshold: 3.0
+      columns:
+        - Campaign Calls
+        - Age
+        # - Previous Contact Days #Do not include as data is bimodal
+  # categorical_encoding:
+  #   method: one-hot  # Options: one-hot, label, target, frequency
+  #   handle_unknown: ignore
     
   numerical_scaling:
     method: standard  # Options: standard, minmax, robust, none
-
-# Feature engineering
-feature_engineering:
-  create_nutrient_balance_index:
-    enabled: true
-    from_columns:
-      - Nutrient N Sensor (ppm)
-      - Nutrient P Sensor (ppm)
-      - Nutrient K Sensor (ppm)
-
-  create_environmental_stress_index:
-    enabled: true
-    from_columns:
-      - Temperature Sensor (°C)
-      - Humidity Sensor (%)
-      - Light Intensity Sensor (lux)
-      - CO2 Sensor (ppm)
-      - O2 Sensor (ppm)
-
-  create_water_quality_score:
-    enabled: true
-    from_columns:
-      - pH Sensor
-      - EC Sensor (dS/m)
-      - Water Level Sensor (mm)
-
-  delete_Type_Stage_AfterCombination: # Delete the columns used to create the new feature "Plant Type-Stage"
-    enabled: true
 
 # Feature selection
 feature_selection:
