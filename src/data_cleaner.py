@@ -143,7 +143,7 @@ class DataCleaner:
         cat_strategy = self.preprocessing_config['cleaning']['impute']['strategy']
         
         # Get column types
-        cols = self.preprocessing_config['columns']
+        cols = df.columns
 
         # Only impute columns that actually have NaN values
         columns_with_nan = df.columns[df.isna().any()].tolist()

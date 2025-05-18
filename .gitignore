@@ -2,3 +2,5 @@ data/
 AIIP_6_Tehnical_Assessment.pdf
 *.png
 src/__init__.py
+models/*
+data/*.csv

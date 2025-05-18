@@ -38,10 +38,17 @@ def test_extract_age():
     assert isinstance(df, pd.DataFrame)
 
 def test_impute():
-    df = get_test_df()
+    # Create a dummy dataframe with 'Education Level' and NaN values, using realistic label types
+    df = pd.DataFrame({
+        'Education Level': ['illiterate', 'university degree', None, 'high school', None, 'illiterate'],
+        'number': [1, 2, 3, None, 5, 6]
+    })
     cleaner = DataCleaner()
     df = cleaner.impute(df.copy())
+    
     assert isinstance(df, pd.DataFrame)
+    # Check if there are any NaN values remaining in 'Education Level'
+    assert not df['Education Level'].isnull().any()
 
 def test_handle_negative_values():
     df = get_test_df()

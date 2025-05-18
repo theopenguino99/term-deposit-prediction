@@ -1,6 +1,6 @@
 # Data CLEANING and PREPROCESSING configuration
 
-# Columns information
+#--------------------------------Columns information-------------------------------#
 columns: # Columns not defined these lists will be removed
   others:
     - Subscription Status  # Target variable
@@ -21,16 +21,14 @@ columns: # Columns not defined these lists will be removed
     - Campaign Calls
     - Previous Contact Days
  
-#-------------------------------------------------------------------#
-
-# Data cleaning settings
+#--------------------------------Data cleaning settings-----------------------------#
 cleaning: 
   drop_columns: # Columns to drop from the dataset manually e.g. none
     enabled: true
     columns:
       # - Housing Loan # Contains the most number of NaN values
 
-  handle_unknown_values:
+  handle_unknown_values: # Change values that are 'unknown' to NaN
     enabled: true
     columns: # List columns that have 'unknown' values
       - Occupation
@@ -43,7 +41,9 @@ cleaning:
   impute:
     enabled: true
     columns:
+      - Occupation
       - Housing Loan
+      - Education Level
       - Personal Loan
     strategy: mode  # Options: mode, constant, knn, random
     neighbors: 5  # Only used if strategy is knn
@@ -54,9 +54,7 @@ cleaning:
       - Campaign Calls
     strategy: absolute  # Options: remove, absolute
 
-#-------------------------------------------------------------------#
-
-# Feature preprocessing settings
+#-------------------------------Feature preprocessing settings--------------#
 preprocessing:
   handle_outliers:
       enabled: false 

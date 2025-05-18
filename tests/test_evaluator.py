@@ -1,7 +1,6 @@
 import sys
 import os
 import numpy as np
-import pandas as pd
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.getcwd(), "src")))
 
@@ -14,7 +13,7 @@ def get_dummy_data():
     y = np.random.choice(['class_a', 'class_b'], size=20)
     return X, y
 
-def test_evaluator_summary():
+def test_evaluator_classification_report():
     X, y = get_dummy_data()
     # Split into train/test
     X_train, X_test = X[:15], X[15:]
@@ -27,18 +26,13 @@ def test_evaluator_summary():
 
     # Evaluate
     evaluator = ModelEvaluator(factory, trainer)
-    accuracy, class_report, conf_matrix = evaluator.evaluate(X_test, y_test)
+    class_report = evaluator.evaluate(X_test, y_test)
 
-    # Print summary table of results
-    print("\nEvaluation Summary Table:")
-    print(f"{'accuracy':25}: {accuracy}")
-
-    # Show classification report and confusion matrix
+    # Print classification report
     print("\nClassification Report:")
     print(class_report)
-    print("\nConfusion Matrix:")
-    print(conf_matrix)
 
-    assert isinstance(accuracy, float)
     assert isinstance(class_report, str)
-    assert hasattr(conf_matrix, "shape")
+    assert "precision" in class_report
+    assert "recall" in class_report
+    assert "f1-score" in class_report

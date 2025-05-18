@@ -68,4 +68,3 @@ evaluation:
     - precision
     - recall
     - f1
-  primary_metric: f1  # Metric used for model selection
