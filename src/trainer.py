@@ -1,8 +1,9 @@
 from loguru import logger
-from sklearn.model_selection import cross_val_score
+from sklearn.model_selection import cross_val_score, GridSearchCV, RandomizedSearchCV
 from config_loader import *
-from sklearn.model_selection import GridSearchCV, RandomizedSearchCV
 from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score, classification_report, confusion_matrix
+from sklearn.preprocessing import LabelEncoder
+
 
 class ModelTrainer:
     """
@@ -11,71 +12,88 @@ class ModelTrainer:
     def __init__(self, model_factory):
         self.model_factory = model_factory
         self.model = model_factory.model
+        self.model_name = model_factory.model_name
         self.config = load_config()
         self.model_config = load_model_config()
         self.preprocessing_config = load_preprocessing_config()
-
-    def train(self, X_train, y_train):
-        self.model_factory.train(X_train, y_train)
+        self.label_encoder = LabelEncoder() # Initialize label encoder since it is binary classification
 
     def train(self, X_train, y_train):
         if self.model is None:
-            self.build_model()
-        y_encoded = self.label_encoder.fit_transform(y_train)
+            self.model = self.model_factory.build_model() # Build the model if not already done
+        y_encoded = self.label_encoder.fit_transform(y_train) # Encode Subscription Status
         logger.info(f"Training {self.model_name} model")
         self.model.fit(X_train, y_encoded)
         return self
 
-    def cross_validate(self, X, y, cv=5, scoring=None):
-        if not scoring:
-            scoring = self.model_factory.metric
-        scores = cross_val_score(self.model_factory.build_model(), X, y, cv=cv, scoring=scoring)
+    def predict(self, X):
+        """
+        Predict labels for the given input features.
+        Args:
+            X: Input features
+        Returns:
+            Array of predicted labels (decoded if label encoder was used)
+        """
+        if self.model is None:
+            raise ValueError("Model has not been trained yet.")
+        y_pred_encoded = self.model.predict(X)
+        # If label_encoder has classes_, decode, else return as is
+        if hasattr(self.label_encoder, "classes_"):
+            return self.label_encoder.inverse_transform(y_pred_encoded)
+        return y_pred_encoded
+
+    def cross_validate(self, X, y):
+        cv_config = self.model_config['cross-validation']
+        scores = cross_val_score(self.model_factory.build_model(), X, y, **cv_config)
         logger.info(f"Cross-validation scores for {self.model_factory.model_name}: {scores}")
         return scores
-
-    def evaluate(self, X_test, y_test):
-        results = self.model_factory.evaluate(X_test, y_test)
-        logger.info(f"Evaluation results for {self.model_factory.model_name}: {results}")
-        return results
-
-    def save(self, filepath):
-        self.model_factory.save(filepath)
-
-    def load(self, filepath):
-        self.model_factory.load(filepath)
     
-    def tune_hyperparameters(self, X_train, y_train, param_grid, search_type="grid", cv=5, scoring=None, n_iter=10):
+    def tune_hyperparameters(self, X_train, y_train):
         """
-        Tune hyperparameters using grid search or random search.
+        Tune hyperparameters based on model configuration.
 
         Args:
             X_train: Training features
             y_train: Training labels
-            param_grid: Dictionary of parameters to search
-            search_type: "grid" for GridSearchCV, "random" for RandomizedSearchCV
-            cv: Number of cross-validation folds
-            scoring: Scoring metric
-            n_iter: Number of iterations for RandomizedSearchCV
 
         Returns:
-            best_params: Best found parameters
-            best_score: Best cross-validation score
+            tuple: (best_params, best_score)
+                - best_params: Dictionary of best found parameters
+                - best_score: Best cross-validation score
         """
-        if self.model_factory.model is None:
-            self.model_factory.build_model()
-        model = self.model_factory.model
+        model_name = self.model_factory.model_name.lower()
+        model_config = self.model_config['models'][model_name]
 
-        if search_type == "grid":
-            search = GridSearchCV(model, param_grid, cv=cv, scoring=scoring, n_jobs=-1)
-        elif search_type == "random":
-            search = RandomizedSearchCV(model, param_grid, n_iter=n_iter, cv=cv, scoring=scoring, n_jobs=-1, random_state=42)
-        else:
-            raise ValueError("search_type must be 'grid' or 'random'")
+        if not model_config.get('hyperparameter_tuning', {}).get('enabled', False):
+            logger.info(f"Hyperparameter tuning is disabled for {model_name}")
+            return None, None
 
-        y_encoded = self.model_factory.label_encoder.fit_transform(y_train)
-        search.fit(X_train, y_encoded)
+        param_grid = model_config['hyperparameter_tuning']['param_grid']
+        if not param_grid:
+            raise ValueError("param_grid cannot be empty")
 
-        logger.info(f"Best params: {search.best_params_}, Best score: {search.best_score_}")
-        # Update the model in the factory with the best estimator
-        self.model_factory.model = search.best_estimator_
-        return search.best_params_, search.best_score_
+        if self.model is None:
+            self.model = self.model_factory.build_model()
+
+        search = GridSearchCV(
+            self.model, 
+            param_grid, 
+            cv=5, 
+            n_jobs=-1, 
+            verbose=1
+        )
+
+        try:
+            y_encoded = self.label_encoder.fit_transform(y_train)
+            search.fit(X_train, y_encoded)
+            logger.info(f"Best parameters found: {search.best_params_}")
+            logger.info(f"Best cross-validation score: {search.best_score_:.4f}")
+            
+            # Update the model with the best estimator
+            self.model = search.best_estimator_
+            
+            return search.best_params_, search.best_score_
+            
+        except Exception as e:
+            logger.error(f"Error during hyperparameter tuning: {str(e)}")
+            raise

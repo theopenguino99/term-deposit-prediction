@@ -18,11 +18,6 @@ def test_model_factory_initialization():
     assert factory.model_name == "random_forest"
     assert factory.model_params == {}
     assert factory.model is None
-    
-    # Test initialization with no model name
-    factory = ModelFactory()
-    assert factory.model_name is None
-
 
 def test_build_model():
     # Test building random forest model
@@ -56,19 +51,19 @@ def test_save_load_model(tmp_path):
     assert os.path.exists(save_path)
 
     # Test loading saved model
-    new_factory = ModelFactory()
+    new_factory = ModelFactory(model_name="random_forest")
     loaded_factory = new_factory.load(save_path)
     assert loaded_factory.model_name == "random_forest"
     assert isinstance(loaded_factory.model, RandomForestClassifier)
 
 def test_save_without_model():
     # Test saving without building model first
-    factory = ModelFactory()
+    factory = ModelFactory(model_name="random_forest")
     with pytest.raises(ValueError):
         factory.save("test_model.joblib")
 
 def test_load_nonexistent_model():
     # Test loading non-existent model file
-    factory = ModelFactory()
+    factory = ModelFactory(model_name="random_forest")
     with pytest.raises(ValueError):
         factory.load("nonexistent_model.joblib")

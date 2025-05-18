@@ -53,22 +53,19 @@ models:
         learning_rate: [constant, adaptive]
         max_iter: [500, 1000, 2000]
 
-# Model evaluation metrics for regression problem
-evaluation_regression: # Used to evaluate models during model training phase
-  metrics:
-    - r2
-    - mae
-    - mse
-    - rmse
-  primary_metric: rmse  # Metric used for model selection
-  lower_is_better: true  # For primary metric
+# Cross-validation settings
+cross_validation:
+  enabled: true
+  cv: 5
+  scoring: 'neg_mean_squared_error'
+  random_state: 42
 
 # Model evaluation metrics for classification problem
-evaluation_classification:
+evaluation:
+  showall: true  # Show all metrics
   metrics:
     - accuracy
     - precision
     - recall
     - f1
-  primary_metric: accuracy  # Metric used for model selection
-  lower_is_better: false  # For primary metric
+  primary_metric: f1  # Metric used for model selection

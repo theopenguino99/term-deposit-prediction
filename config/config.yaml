@@ -5,8 +5,7 @@ paths:
   raw_data: "data/bmarket.db"
   processed_data: "data/"
   features_data: "data/processed/features_data.csv"
-  models_dir: "models/"
-  results_dir: "results/"
+  models_dir: "models"
 
 # Data processing settings
 data:
@@ -18,22 +17,8 @@ data:
   target_num:
     'Temperature Sensor (°C)'
 
-
-# Pipeline settings
-pipeline:
-  use_cross_validation: true
-  n_folds: 5
-  
 # Logging settings
 logging:
   level: "INFO"
   log_file: "pipeline.log"
   console_output: true
-
-# Experiment tracking
-experiment:
-  track_metrics: true
-  save_models: true
-  save_feature_importance: true
-  save_predictions: true
-  save_visualizations: true
