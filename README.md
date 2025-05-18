@@ -159,8 +159,8 @@ As a fresh recruit at AI-Vive-Banking, my mission is to become the crystal ball 
 ### **1. Clone the Repository**
 
 ```sh
-git clone https://github.com/yourusername/ai-vive-banking-term-deposit.git
-cd ai-vive-banking-term-deposit
+git clone https://github.com/theopenguino99/aiip6-Er-Qi-Yang-227J.git
+cd aiip6-Er-Qi-Yang-227J
 ```
 
 ### **2. Install Requirements**
@@ -196,7 +196,6 @@ pytest -s
 
 ## 🙏 Acknowledgements
 
-- Thanks to the AI-Vive-Banking team for the opportunity and support!
-- For questions or collaboration, contact me at the emails above.
+- Thanks you for reading my Technical Assessment Submission!
 
 ---
