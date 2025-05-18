@@ -61,7 +61,7 @@ class ModelTrainer:
                 - best_params: Dictionary of best found parameters
                 - best_score: Best cross-validation score
         """
-        model_name = self.model_factory.model_name.lower()
+        model_name = self.model_factory.model_name
         model_config = self.model_config['models'][model_name]
 
         if not model_config.get('hyperparameter_tuning', {}).get('enabled', False):

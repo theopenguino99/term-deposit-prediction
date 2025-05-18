@@ -35,23 +35,23 @@ def main():
         logger.info(f"Tuning hyperparameters for {model_name}")
         factory = ModelFactory(model_name=model_name)
         trainer = ModelTrainer(factory)
-        try:
-            best_params, best_score = trainer.tune_hyperparameters(X_train, y_train)
-            logger.info(f"Best params for {model_name}: {best_params}")
-            logger.info(f"Best CV score for {model_name}: {best_score}")
-            results.append({
-                "model": model_name,
-                "best_params": best_params,
-                "best_score": best_score
-            })
-        except Exception as e:
-            logger.error(f"Hyperparameter tuning failed for {model_name}: {e}")
-            results.append({
-                "model": model_name,
-                "best_params": None,
-                "best_score": None,
-                "error": str(e)
-            })
+        # try:
+        best_params, best_score = trainer.tune_hyperparameters(X_train, y_train)
+        logger.info(f"Best params for {model_name}: {best_params}")
+        logger.info(f"Best CV score for {model_name}: {best_score}")
+        results.append({
+            "model": model_name,
+            "best_params": best_params,
+            "best_score": best_score
+        })
+        # except Exception as e:
+        #     logger.error(f"Hyperparameter tuning failed for {model_name}: {e}")
+        #     results.append({
+        #         "model": model_name,
+        #         "best_params": None,
+        #         "best_score": None,
+        #         "error": str(e)
+        #     })
 
     # 5. Save results to CSV
     results_df = pd.DataFrame(results)
