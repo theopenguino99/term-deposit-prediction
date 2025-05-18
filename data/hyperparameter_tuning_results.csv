@@ -1,4 +1,0 @@
-model,best_params,best_score
-random_forest,"{'max_depth': 10, 'n_estimators': 100}",0.8965622471941457
-xgboost,"{'learning_rate': 0.05, 'max_depth': 5, 'n_estimators': 100}",0.897477026631208
-MLP,"{'activation': 'relu', 'hidden_layer_sizes': [100, 50], 'max_iter': 1000}",0.8970196223836048
