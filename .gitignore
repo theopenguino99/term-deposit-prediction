@@ -1,4 +1,4 @@
-data/
+data/*
 AIIP_6_Tehnical_Assessment.pdf
 src/__init__.py
 models/*
