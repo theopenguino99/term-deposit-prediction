@@ -6,3 +6,5 @@ category_encoders
 loguru
 pyyaml
 joblib
+matplotlib
+seaborn
