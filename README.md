@@ -154,8 +154,15 @@ As a fresh recruit at AI-Vive-Banking, my mission is to become the crystal ball 
   - 🟡 **Recall:** Correct positive predictions / All actual positives.
   - 🔵 **F1 Score:** Harmonic mean of precision and recall.
   - 🟣 **Accuracy:** Correct predictions / Total predictions.
+In the context of AI-Vive-Banking's marketing strategy:
 
+🟢 **Precision**  
+Crucial because it helps reduce wasted resources by ensuring that the clients identified as likely to subscribe are truly interested, minimizing efforts spent on clients who are unlikely to say yes. 
 
+🟡**Recall**
+Equally important, as it measures the model's ability to identify all potential subscribers, maximizing the bank's chances of successfully targeting clients who might otherwise be missed. 
+
+Accuracy in this case is not a good metric as it only gives a blanket statement of the rate of correct predictions without emphasising on the importance of Yes or No predictions according to problem context. By optimizing both precision and recall, the bank can efficiently allocate marketing resources and improve the overall success rate of term deposit subscriptions.
 
 ### **Evaluation Screenshots**
 
@@ -165,6 +172,28 @@ As a fresh recruit at AI-Vive-Banking, my mission is to become the crystal ball 
 | 🚀 XGBoost         | ![XGB Report](./report_xgboost.png) |
 | 🧠 MLP             | ![MLP Report](./report_mlp.png) |
 
+### **📊 Model Performance Analysis**
+
+Comparing across models shows interesting performance variations:
+
+**🎯 Precision Comparison**:
+- 🧠 MLP achieves highest '<font color="green">yes</font>' precision at <font color="green">68.8%</font>, slightly better than RF (<font color="green">68.3%</font>) and XGBoost (<font color="green">67.6%</font>)
+- For '<font color="red">no</font>' precision, 🧠 MLP leads at <font color="red">90.4%</font>, while both 🌲 RF and 🚀 XGBoost tie at <font color="red">90.2%</font>
+- Overall, 🧠 MLP shows marginal precision advantages across both classes
+
+**📈 Recall Comparison**:
+- 🧠 MLP shows best '<font color="green">yes</font>' recall at <font color="green">20.2%</font>, outperforming both 🌲 RF (<font color="green">18.6%</font>) and 🚀 XGBoost (<font color="green">18.6%</font>)
+- For '<font color="red">no</font>' recall, 🌲 RF leads slightly at <font color="red">98.9%</font>, followed by 🧠 MLP (<font color="red">98.8%</font>) and 🚀 XGBoost (<font color="red">98.8%</font>)
+- The recall differences are small but consistent across models
+
+**🔍 Key Observations**:
+- 🧠 MLP generally outperforms the tree-based models by small margins
+- ⚠️ All models struggle with 'yes' recall, suggesting difficulty in identifying positive cases
+- 📊 Performance differences between models are minimal, indicating the problem's inherent complexity
+**⚡ Performance vs Training Time**:
+- 🧠 MLP took the longest to train despite showing only marginal improvements, as neural networks require iterative optimization through backpropagation across multiple epochs
+- 💡 The minimal performance gain may not justify the extra computational cost
+- 🎯 Recommend using Random Forest or XGBoost for production deployment due to faster training while maintaining comparable performance
 
 
 ### **ROC Curve for All Models**
@@ -174,6 +203,14 @@ As a fresh recruit at AI-Vive-Banking, my mission is to become the crystal ball 
 ![ROC Curve](./roc_curve_all_models.png)
 
 </div>
+
+The ROC (Receiver Operating Characteristic) curve shows the trade-off between True Positive Rate (TPR) and False Positive Rate (FPR) at different classification thresholds. While ROC curves are useful for model comparison, they are less relevant in this banking context because:
+
+1. The business cares more about precision and recall directly - identifying actual subscribers (precision) and not missing potential subscribers (recall)
+2. ROC curves don't account for class imbalance, which exists in this dataset
+3. The focus is on optimizing marketing resources, making precision/recall metrics more actionable than TPR/FPR trade-offs
+
+Therefore, while the ROC curves above show all models performing similarly well (AUC > 0.8), the classification reports with precision/recall metrics provide more practical insights for AI-Vive-Banking's marketing strategy.
 
 ---
 
