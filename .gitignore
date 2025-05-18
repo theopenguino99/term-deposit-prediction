@@ -1,2 +1,4 @@
 data/
-AIIP 6 Tehnical Assessment.pdf
+AIIP_6_Tehnical_Assessment.pdf
+*.png
+src/__init__.py
