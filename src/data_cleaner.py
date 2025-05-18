@@ -43,6 +43,7 @@ class DataCleaner:
         # Create a copy to avoid modifying the original
         df_cleaned = df.copy()
         df_cleaned = self.drop_columns(df_cleaned)
+        df_cleaned = self.drop_Housing_Loan_NaN_rows(df_cleaned)
         df_cleaned = self.handle_unknown_values(df_cleaned)
         df_cleaned = self.extract_age(df_cleaned)
         df_cleaned = self.impute(df_cleaned)
@@ -75,6 +76,24 @@ class DataCleaner:
                     raise ValueError(f"Column '{col}' specified in config file not found in DataFrame")
                 
         return df
+    
+    def drop_Housing_Loan_NaN_rows(self, df):
+        """
+        Drop rows with NaN values in the 'Housing Loan' column.
+        
+        Args:
+            df (pandas.DataFrame): Input dataframe
+            
+        Returns:
+            pandas.DataFrame: Dataframe with dropped rows
+        """
+        if 'Housing Loan' in df.columns and self.preprocessing_config['cleaning']['remove_Housing_Loan_NaN']['enabled']:
+            df = df.dropna(subset=['Housing Loan'])
+        else:
+            logger.warning("Large number of NaN values in 'Housing Loan' column have not been deleted.")
+        
+        return df
+
     
     def handle_unknown_values(self, df):
         """

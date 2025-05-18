@@ -140,6 +140,9 @@ class DataPreprocessor:
                 elif scaling_method == 'robust':
                     scaler = RobustScaler()
                 
+                elif scaling_method == 'none':
+                    return df
+                
                 # Fit and transform the numerical columns
                 df_scaled[numerical_cols_2scale] = scaler.fit_transform(df[numerical_cols_2scale])
                 self.scalers['numerical'] = scaler

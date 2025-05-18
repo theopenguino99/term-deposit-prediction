@@ -23,6 +23,10 @@ columns: # Columns not defined these lists will be removed
  
 #--------------------------------Data cleaning settings-----------------------------#
 cleaning: 
+
+  remove_Housing_Loan_NaN: # Remove rows with Housing Loan = 0
+    enabled: true
+
   drop_columns: # Columns to drop from the dataset manually e.g. none
     enabled: true
     columns:
@@ -45,8 +49,7 @@ cleaning:
       - Housing Loan
       - Education Level
       - Personal Loan
-    strategy: mode  # Options: mode, constant, knn, random
-    neighbors: 5  # Only used if strategy is knn
+    strategy: random  # Options: mode, constant, random
   
   handle_negative_values:
     enabled: true
@@ -67,7 +70,7 @@ preprocessing:
         # - Previous Contact Days #Do not include as data is bimodal
     
   numerical_scaling:
-    method: standard  # Options: standard, minmax, robust, none
+    method: minmax  # Options: standard, minmax, robust, none
     columns:
       - Campaign Calls
       - Age

@@ -9,3 +9,5 @@ In order to launch the tests, go to the tests directory first then execute pytes
 If the goal is maximizing outreach to potential subscribers, high recall is crucial. If the goal is efficient resource allocation, high precision is better.
 
 For balanced decision-making, you might consider the F1-score, which accounts for both precision and recall.
+
+- Increasing to 2000 iterations for MLP causes an overfit
